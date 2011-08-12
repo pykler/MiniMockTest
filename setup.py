@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import sys, os
 
-setup(name='minimocktest',
+setup(name='MiniMockTest',
       version='0.1',
       description="Custom unittest TestCase that wraps minimock",
       long_description="""\
