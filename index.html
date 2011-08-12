@@ -31,6 +31,63 @@ someobj = self.Mock('someobj')
 
 Also you do not have to worry about resetting the mock, all that is taken care of by the MockTestCase tearDown function.</p>
 
+<h2>Examples</h2>
+
+<h3>Simple Testing</h3>
+
+{% highlight python %}
+import unittest
+from minimocktest import MockTestCase
+
+import StringIO
+import urllib2
+
+def urldump(url):
+    ''' simple function to be tested '''
+    f = urllib2.urlopen(url)
+    try:
+        return f.read()
+    finally:
+        f.close()
+
+class MySimpleTestCase(MockTestCase):
+    def setUp(self):
+        super(self.__class__, self).setUp()
+        self.file = StringIO.StringIO('MiniMockTest')
+    def test_urldump_dumpsContentProperly(self):
+        self.mock('urllib2.urlopen', returns=self.file)
+        self.assertEquals(urldump('http://pykler.github.com'), 'MiniMockTest')
+
+suite = unittest.TestLoader().loadTestsFromTestCase(MySimpleTestCase)
+unittest.TextTestRunner().run(suite)
+{% endhighlight %}
+
+<h3>Django Integration</h3>
+
+To integrate with Django, simply create the following class, and use it as your base instead of using the django.test.TestCase directly.
+
+{% highlight python %}
+from minimocktest import MockTestCase
+from django.test import TestCase
+from django.test.client import Client
+
+class DjangoTestCase(TestCase, MockTestCase):
+    '''
+    A TestCase class that combines minimocktest and django.test.TestCase
+    '''
+
+    def setUp(self):
+        TestCase.setUp(self)
+        MockTestCase.setUp(self)
+        # optional: shortcut client handle for quick testing
+        self.client = Client()
+
+    def tearDown(self):
+        MockTestCase.tearDown(self)
+        TestCase.tearDown(self)
+{% endhighlight %}
+
+
 <h2>License</h2>
 <p>MIT License</p>
 <h2>Authors</h2>
