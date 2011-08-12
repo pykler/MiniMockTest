@@ -51,20 +51,24 @@
 
     <p>minimocktest.MockTestCase provides a full featured unittest.TestCase subclass that allows for mocking. Using this class as the basis of your unittests allows you to mock functions by calling
 
+{% highlight python %}
 self.mock('urllib2.urlopen', returns=StringIO.StringIO('{"error": 1}'))
+{% endhighlight %}
 
 or creating mock objects
 
+{% highlight python %}
 someobj = self.Mock('someobj')
+{% endhighlight %}
 
-Also you do not have to worry about resetting the mock, all that is taken care of by the MockTestCase tearDown function.</p><h2>Dependencies</h2>
-<p>None</p>
+Also you do not have to worry about resetting the mock, all that is taken care of by the MockTestCase tearDown function.</p>
+
 <h2>License</h2>
-<p>MIT License </p>
+<p>MIT License</p>
 <h2>Authors</h2>
-<p>Hatem Nassrat (hnassrat@gmail.com)<br/><br/>      </p>
+<p>Hatem Nassrat (hnassrat@gmail.com)</p>
 <h2>Contact</h2>
-<p>Hatem Nassrat (hnassrat@gmail.com)<br/>      </p>
+<p>Hatem Nassrat (hnassrat@gmail.com)</p>
 
 
     <h2>Download</h2>
