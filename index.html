@@ -54,9 +54,18 @@ class MySimpleTestCase(MockTestCase):
     def setUp(self):
         super(self.__class__, self).setUp()
         self.file = StringIO.StringIO('MiniMockTest')
+        self.file.close = self.Mock('file_close_function')
     def test_urldump_dumpsContentProperly(self):
         self.mock('urllib2.urlopen', returns=self.file)
         self.assertEquals(urldump('http://pykler.github.com'), 'MiniMockTest')
+        self.assertSameTrace("Called urllib2.urlopen('http://pykler.github.com')")
+        urllib2.urlopen('anything')
+        self.mock('urllib2.urlopen', returns=self.file, tracker=None)
+        urllib2.urlopen('this is not tracked')
+        self.assertSameTrace('\n'.join([
+            "Called urllib2.urlopen('http://pykler.github.com')",
+            "Called urllib2.urlopen('anything')",
+        ]))
 
 suite = unittest.TestLoader().loadTestsFromTestCase(MySimpleTestCase)
 unittest.TextTestRunner().run(suite)
