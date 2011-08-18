@@ -6,7 +6,7 @@ body {
 }
 #container {
   margin: 0 auto;
-  width: 700px;
+  width: 750px;
 }
 h1 { font-size: 3.8em; color: #0033dd; margin-bottom: 3px; }
 h1 .small { font-size: 0.4em; }
