@@ -17,8 +17,6 @@ class MockTestCase(TestCase):
     `self.assertSameTrace` calls minimock.assert_same_trace with `self.tt`
     '''
 
-    Mock = minimock.Mock
-
     def setUp(self):
         TestCase.setUp(self)
         self.tt = minimock.TraceTracker()
@@ -26,6 +24,11 @@ class MockTestCase(TestCase):
     def tearDown(self):
         self.mockRestore()
         TestCase.tearDown(self)
+
+    def Mock(self, *args, **kwargs):
+        if 'tracker' not in kwargs:
+            kwargs['tracker'] = self.tt
+        return minimock.Mock(*args, **kwargs)
 
     def mock(self, *args, **kwargs):
         if len(args) <= 1 and 'nsdicts' not in kwargs:
