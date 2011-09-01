@@ -58,12 +58,16 @@ class MySimpleTestCase(MockTestCase):
     def test_urldump_dumpsContentProperly(self):
         self.mock('urllib2.urlopen', returns=self.file)
         self.assertEquals(urldump('http://pykler.github.com'), 'MiniMockTest')
-        self.assertSameTrace("Called urllib2.urlopen('http://pykler.github.com')")
+        self.assertSameTrace('\n'.join([
+            "Called urllib2.urlopen('http://pykler.github.com')",
+            "Called file_close_function()",
+        ]))
         urllib2.urlopen('anything')
         self.mock('urllib2.urlopen', returns=self.file, tracker=None)
         urllib2.urlopen('this is not tracked')
         self.assertSameTrace('\n'.join([
             "Called urllib2.urlopen('http://pykler.github.com')",
+            "Called file_close_function()",
             "Called urllib2.urlopen('anything')",
         ]))
 
