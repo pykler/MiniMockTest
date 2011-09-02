@@ -51,3 +51,7 @@ class MockTestCase(TestCase):
 
     def assertSameTrace(self, want):
         minimock.assert_same_trace(self.tt, want)
+
+    def assertInTrace(self, want):
+        trace = self.tt.dump()
+        self.assertTrue(want in trace, '%s not in trace:\n%s' %(want, trace))
