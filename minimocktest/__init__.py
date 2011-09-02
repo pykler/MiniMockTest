@@ -50,8 +50,19 @@ class MockTestCase(TestCase):
         minimock.restore()
 
     def assertSameTrace(self, want):
+        '''
+        Asserts if want == trace
+        '''
         minimock.assert_same_trace(self.tt, want)
 
-    def assertInTrace(self, want):
+    def assertTrace(self, want, includes=True):
+        '''
+        Asserts if want is included in trace, or excluded when includes=False
+        '''
         trace = self.tt.dump()
-        self.assertTrue(want in trace, '%s not in trace:\n%s' %(want, trace))
+        condition = want in trace
+        fragment = 'not in'
+        if not includes:
+            condition = not condition
+            fragment = 'in'
+        self.assertTrue(condition, '%s %s trace:\n%s' %(want, fragment, trace))
