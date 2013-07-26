@@ -21,15 +21,22 @@ simply as follows::
         A TestCase class that combines minimocktest and django.test.TestCase
         '''
 
-        def setUp(self):
-            TestCase.setUp(self)
+        def _pre_setup(self):
+            TestCase._pre_setup(self)
             MockTestCase.setUp(self)
             # optional: shortcut client handle for quick testing
             self.client = Client()
 
-        def tearDown(self):
+        def _post_teardown(self):
             MockTestCase.tearDown(self)
-            TestCase.tearDown(self)
+            TestCase._post_teardown(self)
+
+        def setUp(self):
+            pass
+
+        def tearDown(self):
+            pass
+
 
 COPYING
 -------
