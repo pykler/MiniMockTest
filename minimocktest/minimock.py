@@ -40,16 +40,30 @@ implementation is simple because most of the work is done by doctest.
 
 __all__ = ["mock", "restore", "Mock", "TraceTracker", "assert_same_trace"]
 
-import __builtin__
 import sys
 import inspect
 import doctest
 import re
 import textwrap
+
 try:
-    from cStringIO import StringIO
+    import builtins
 except ImportError:
-    from StringIO import StringIO
+    # python < 3
+    import __builtin__ as builtins
+    try:
+        from cStringIO import StringIO
+    except ImportError:
+        from StringIO import StringIO
+else:
+    # python 3
+    from io import StringIO
+try:
+    next
+except NameError:
+    # python < 2.6
+    def next(x):
+        return x.next()
 
 # A list of mocked objects. Each item is a tuple of (original object,
 # namespace dict, object name, and a list of object attributes).
@@ -69,7 +83,7 @@ def lookup_by_name(name, nsdicts):
         ...     (locals(),))
         >>> obj_name, attrs
         ('os', ['path', 'isdir'])
-        >>> getattr(getattr(nsdict[obj_name], attrs[0]), attrs[1])
+        >>> getattr(getattr(nsdict[obj_name], attrs[0]), attrs[1])  # doctest: +ELLIPSIS
         <function isdir at ...>
         >>> lookup_by_name("os.monkey", (locals(),))
         Traceback (most recent call last):
@@ -111,11 +125,11 @@ def mock(name, nsdicts=None, mock_obj=None, **kw):
     An example of how os.path.isfile is replaced::
 
         >>> import os
-        >>> os.path.isfile
+        >>> os.path.isfile  # doctest: +ELLIPSIS
         <function isfile at ...>
         >>> isfile_id = id(os.path.isfile)
         >>> mock("os.path.isfile", returns=True)
-        >>> os.path.isfile
+        >>> os.path.isfile  # doctest: +ELLIPSIS
         <Mock ... os.path.isfile>
         >>> os.path.isfile("/foo/bar/baz")
         Called os.path.isfile('/foo/bar/baz')
@@ -131,16 +145,20 @@ def mock(name, nsdicts=None, mock_obj=None, **kw):
         >>> mock_id != id(os.path.isfile)
         True
         >>> restore()
-        >>> os.path.isfile
+        >>> os.path.isfile  # doctest: +ELLIPSIS
         <function isfile at ...>
         >>> isfile_id == id(os.path.isfile)
         True
 
     Test mocking a built-in function::
 
-        >>> mock("raw_input", returns="okay")
-        >>> raw_input()
-        Called raw_input()
+        >>> try:
+        ...     input = raw_input
+        ... except NameError:
+        ...     pass  # for Python 3
+        >>> mock("input", returns="okay")
+        >>> input()
+        Called input()
         'okay'
         >>> restore()
 
@@ -176,10 +194,10 @@ def mock(name, nsdicts=None, mock_obj=None, **kw):
         ...         return getattr(self._obj, name)
         >>> import os
         >>> os = Proxy(os)
-        >>> os.path.isfile
+        >>> os.path.isfile  # doctest: +ELLIPSIS
         <function isfile at ...>
         >>> mock('os.path.isfile')
-        >>> os.path.isfile
+        >>> os.path.isfile  # doctest: +ELLIPSIS
         <Mock ... os.path.isfile>
         >>> restore()
 
@@ -190,7 +208,7 @@ def mock(name, nsdicts=None, mock_obj=None, **kw):
             # stack[1][0] is the frame object of the caller to this function
             globals_ = stack[1][0].f_globals
             locals_ = stack[1][0].f_locals
-            nsdicts = (locals_, globals_, __builtin__.__dict__)
+            nsdicts = (locals_, globals_, builtins.__dict__)
         finally:
             del(stack)
 
@@ -208,7 +226,7 @@ def mock(name, nsdicts=None, mock_obj=None, **kw):
     # because if tmp is itself a mock object, tmp.func_globals will
     # return another mock object
     if isinstance(getattr(tmp, 'func_globals', None), dict):
-        nsdict = tmp.func_globals
+        nsdict = tmp.__globals__
     if not attrs:
         original = tmp
         nsdict[obj_name] = mock_obj
@@ -264,7 +282,7 @@ def assert_same_trace(tracker, want):
             >>> m.some_meth('dummy argument')
             >>> assert_same_trace(tt,
             ...     "Called mock_obj.some_meth('dummy argument')\n")
-            >>> assert_same_trace(tt, "Non-matching trace")
+            >>> assert_same_trace(tt, "Non-matching trace")  # doctest: +ELLIPSIS
             Traceback (most recent call last):
             ...
             AssertionError...
@@ -292,11 +310,11 @@ class Printer(AbstractTracker):
         parts = [repr(a) for a in args]
         parts.extend(
             '%s=%r' % (items) for items in sorted(kw.items()))
-        msg = 'Called %s(%s)' % (func_name, ', '.join(parts))
+        msg = 'Called %s(%s)\n' % (func_name, ', '.join(parts))
         if len(msg) > 80:
-            msg = 'Called %s(\n    %s)' % (
+            msg = 'Called %s(\n    %s)\n' % (
                 func_name, ',\n    '.join(parts))
-        print >> self.file, msg
+        self.file.write(msg)
 
     def set(self, obj_name, attr, value): 
         """
@@ -304,7 +322,7 @@ class Printer(AbstractTracker):
         >>> z.a = 2
         Set z.a = 2
         """
-        print >> self.file, 'Set %s.%s = %r' % (obj_name, attr, value)
+        self.file.write('Set %s.%s = %r\n' % (obj_name, attr, value))
         
 class TraceTracker(Printer):
     """
@@ -391,8 +409,13 @@ class TraceTracker(Printer):
 
     def clear(self):
         """Clear the MiniMock object usage that has been tracked so far.
+
+        truncate() was modified not to change the file position anymore
+        in Python 3.1.2, so should be sought explicitly.
+        http://bugs.python.org/issue8558
         """
         self.out.truncate(0)
+        self.out.seek(0)
 
 
 def normalize_function_parameters(text):
@@ -505,7 +528,7 @@ class Mock(object):
             return self.mock_returns
         elif self.mock_returns_iter is not None:
             try:
-                return self.mock_returns_iter.next()
+                return next(self.mock_returns_iter)
             except StopIteration:
                 raise Exception("No more mock return values are present.")
         elif self.mock_returns_func is not None:
