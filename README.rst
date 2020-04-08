@@ -1,10 +1,10 @@
 MiniMockTest
 ============
 
-.. image:: https://pypip.in/v/MiniMockTest/badge.png
+.. image:: https://img.shields.io/pypi/v/MiniMockTest.svg
    :target: https://crate.io/packages/MiniMockTest/#info
 
-.. image:: https://pypip.in/d/MiniMockTest/badge.png
+.. image:: https://img.shields.io/pypi/dm/MiniMockTest.svg
    :target: https://crate.io/packages/MiniMockTest/#info
 
 .. image:: https://requires.io/github/pykler/MiniMockTest/requirements.png?branch=master
